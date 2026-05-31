@@ -18,12 +18,9 @@ class Settings:
     api_key: str = os.getenv("AZURE_OPENAI_API_KEY", "")
     api_version: str = os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21")
 
-    # BUG (seeded for SRE Agent demo):
-    # The production Foundry resource exposes a deployment named "gpt-4o".
-    # This default points at "gpt-4o-prod", which was never created, so every
-    # request fails with: DeploymentNotFound - The API deployment for this
-    # resource does not exist.
-    deployment: str = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o-prod")
+    # The default deployment name must match an existing model deployment on
+    # the Azure AI Foundry resource.
+    deployment: str = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
 
 
 settings = Settings()
