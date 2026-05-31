@@ -49,7 +49,7 @@ class ChatService:
             raise
         except RateLimitError:
             logger.warning(
-                "OpenAI API rate limit hit for deployment '%s' at %s",
+                "OpenAI API rate limit hit for deployment '%s' at %s (will retry if attempts remain)",
                 settings.deployment,
                 settings.endpoint,
             )

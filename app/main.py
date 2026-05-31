@@ -47,7 +47,7 @@ def chat(req: ChatRequest) -> ChatResponse:
         raise HTTPException(
             status_code=429,
             detail="Service is temporarily rate-limited. Please retry after a few seconds.",
-            headers={"Retry-After": "5"},
+            headers={"Retry-After": "10"},
         ) from exc
     except APITimeoutError as exc:
         logger.exception("Upstream AI service timed out; returning 504 to caller")
