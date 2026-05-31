@@ -1,0 +1,9 @@
+2026-05-31T08:14:22.013Z INFO  foundry-sre-demo Starting Foundry SRE Demo v1.0.0 (deployment=gpt-4o-prod)
+2026-05-31T08:14:31.882Z INFO  foundry-sre-demo POST /chat prompt_len=42
+2026-05-31T08:14:32.114Z ERROR foundry-sre-demo.chat Foundry deployment 'gpt-4o-prod' not found at https://sre-demo-foundry.openai.azure.com
+Traceback (most recent call last):
+  File "/app/app/chat_service.py", line 22, in complete
+    response = self._client.chat.completions.create(
+openai.NotFoundError: Error code: 404 - {'error': {'code': 'DeploymentNotFound', 'message': 'The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.'}}
+2026-05-31T08:14:32.119Z ERROR foundry-sre-demo POST /chat -> 502 DeploymentNotFound: deployment 'gpt-4o-prod' does not exist in the Foundry resource.
+2026-05-31T08:15:02.451Z ERROR foundry-sre-demo.chat Foundry deployment 'gpt-4o-prod' not found at https://sre-demo-foundry.openai.azure.com (repeat=37 in last 60s)
