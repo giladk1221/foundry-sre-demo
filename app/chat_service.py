@@ -57,9 +57,9 @@ class ChatService:
                         _RATE_LIMIT_MAX_ATTEMPTS,
                     )
                     raise
-            except APITimeoutError as exc:
-                # Allow a single retry; raise immediately on the last attempt
-                # or if we have already retried once.
+            except APITimeoutError:
+                # Allow a single retry; raise immediately if already retried or
+                # if this is the last attempt (no more iterations to retry into).
                 if not timeout_retried and attempt < _RATE_LIMIT_MAX_ATTEMPTS:
                     timeout_retried = True
                     logger.warning(
