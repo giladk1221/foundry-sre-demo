@@ -3,6 +3,7 @@ import logging
 
 from openai import AzureOpenAI
 from openai import NotFoundError
+from openai import RateLimitError
 
 from app.config import settings
 
@@ -15,6 +16,7 @@ class ChatService:
             azure_endpoint=settings.endpoint,
             api_key=settings.api_key,
             api_version=settings.api_version,
+            max_retries=3,
         )
 
     def complete(self, prompt: str) -> str:
@@ -29,6 +31,13 @@ class ChatService:
             # resource does not exist.
             logger.exception(
                 "Foundry deployment '%s' not found at %s",
+                settings.deployment,
+                settings.endpoint,
+            )
+            raise
+        except RateLimitError:
+            logger.warning(
+                "Rate limited by Foundry deployment '%s' at %s",
                 settings.deployment,
                 settings.endpoint,
             )
