@@ -20,7 +20,7 @@ class ChatService:
     def complete(self, prompt: str) -> str:
         try:
             response = self._client.chat.completions.create(
-                model=settings.deployment,  # <-- stale deployment name
+                model=settings.deployment,
                 messages=[{"role": "user", "content": prompt}],
             )
             return response.choices[0].message.content or ""
