@@ -2,7 +2,9 @@
 import logging
 
 from fastapi import FastAPI, HTTPException
+from openai import APITimeoutError
 from openai import NotFoundError
+from openai import RateLimitError
 from pydantic import BaseModel
 
 from app.chat_service import chat_service
@@ -41,4 +43,15 @@ def chat(req: ChatRequest) -> ChatResponse:
                 f"DeploymentNotFound: deployment '{settings.deployment}' "
                 "does not exist in the Foundry resource."
             ),
+        ) from exc
+    except RateLimitError as exc:
+        raise HTTPException(
+            status_code=429,
+            detail="Azure OpenAI rate limit exceeded. Please retry after a moment.",
+            headers={"Retry-After": "60"},
+        ) from exc
+    except APITimeoutError as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="Azure OpenAI request timed out. Please retry.",
         ) from exc
