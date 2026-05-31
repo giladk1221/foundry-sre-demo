@@ -35,7 +35,7 @@ def chat(req: ChatRequest) -> ChatResponse:
     try:
         reply = chat_service.complete(req.prompt)
         return ChatResponse(reply=reply, deployment=settings.deployment)
-    except RateLimitError as exc:
+    except RateLimitError:
         # 429: upstream Azure OpenAI API is rate-limiting requests
         return JSONResponse(
             status_code=429,

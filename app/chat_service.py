@@ -56,8 +56,6 @@ class ChatService:
                     settings.endpoint,
                 )
                 raise
-        # Should never reach here
-        raise RuntimeError("Unexpected exit from retry loop")
 
 
 chat_service = ChatService()
