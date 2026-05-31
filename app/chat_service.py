@@ -2,7 +2,14 @@
 import logging
 
 from openai import AzureOpenAI
-from openai import NotFoundError
+from openai import NotFoundError, RateLimitError
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+    before_sleep_log,
+)
 
 from app.config import settings
 
@@ -17,6 +24,13 @@ class ChatService:
             api_version=settings.api_version,
         )
 
+    @retry(
+        retry=retry_if_exception_type(RateLimitError),
+        wait=wait_exponential(multiplier=1, min=1, max=60),
+        stop=stop_after_attempt(5),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )
     def complete(self, prompt: str) -> str:
         try:
             response = self._client.chat.completions.create(
