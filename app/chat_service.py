@@ -24,7 +24,7 @@ class ChatService:
         )
 
     def complete(self, prompt: str) -> str:
-        last_timeout_exc: APITimeoutError | None = None
+        timeout_retried = False
         for attempt in range(1, _RATE_LIMIT_MAX_ATTEMPTS + 1):
             try:
                 response = self._client.chat.completions.create(
@@ -58,18 +58,20 @@ class ChatService:
                     )
                     raise
             except APITimeoutError as exc:
-                if last_timeout_exc is None:
-                    last_timeout_exc = exc
+                # Allow a single retry; raise immediately on the last attempt
+                # or if we have already retried once.
+                if not timeout_retried and attempt < _RATE_LIMIT_MAX_ATTEMPTS:
+                    timeout_retried = True
                     logger.warning(
                         "Request timed out (attempt %d/%d); retrying once",
                         attempt,
                         _RATE_LIMIT_MAX_ATTEMPTS,
                     )
                 else:
-                    logger.error("Request timed out on retry; giving up")
+                    logger.error("Request timed out; giving up")
                     raise
-        # Should be unreachable, but satisfy the type-checker.
-        raise RuntimeError("Unexpected exit from retry loop")
+        # Should be unreachable: the final loop iteration always returns or raises.
+        raise RuntimeError("Unexpected exit from retry loop")  # pragma: no cover
 
 
 chat_service = ChatService()
