@@ -2,7 +2,7 @@
 import logging
 
 from fastapi import FastAPI, HTTPException
-from openai import NotFoundError
+from openai import APITimeoutError, NotFoundError, RateLimitError
 from pydantic import BaseModel
 
 from app.chat_service import chat_service
@@ -41,4 +41,23 @@ def chat(req: ChatRequest) -> ChatResponse:
                 f"DeploymentNotFound: deployment '{settings.deployment}' "
                 "does not exist in the Foundry resource."
             ),
+        ) from exc
+    except RateLimitError as exc:
+        logger.warning("OpenAI API rate limit exceeded; returning 429 to caller")
+        raise HTTPException(
+            status_code=429,
+            detail="Service is temporarily rate-limited. Please retry after a few seconds.",
+            headers={"Retry-After": "5"},
+        ) from exc
+    except APITimeoutError as exc:
+        logger.exception("Upstream AI service timed out; returning 504 to caller")
+        raise HTTPException(
+            status_code=504,
+            detail="Upstream AI service timed out. Please retry.",
+        ) from exc
+    except Exception as exc:
+        logger.exception("Unexpected error in /chat endpoint")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error",
         ) from exc
