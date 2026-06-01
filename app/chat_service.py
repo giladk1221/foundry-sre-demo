@@ -1,8 +1,8 @@
 """Chat service that calls an Azure AI Foundry (Azure OpenAI) model deployment."""
 import logging
+import time
 
-from openai import AzureOpenAI
-from openai import NotFoundError
+from openai import AzureOpenAI, NotFoundError, RateLimitError
 
 from app.config import settings
 
@@ -18,12 +18,28 @@ class ChatService:
         )
 
     def complete(self, prompt: str) -> str:
+        return self.get_chat_response(prompt)
+
+    def get_chat_response(self, prompt: str) -> str:
         try:
-            response = self._client.chat.completions.create(
-                model=settings.deployment,  # <-- stale deployment name
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return response.choices[0].message.content or ""
+            for attempt in range(3):
+                try:
+                    response = self._client.chat.completions.create(
+                        model=settings.deployment,
+                        messages=[{"role": "user", "content": prompt}],
+                    )
+                    return response.choices[0].message.content or ""
+                except RateLimitError:
+                    if attempt == 2:
+                        raise
+                    backoff_seconds = 2**attempt
+                    logger.warning(
+                        "Rate limited by Foundry deployment '%s' (attempt %d/3); retrying in %d seconds",
+                        settings.deployment,
+                        attempt + 1,
+                        backoff_seconds,
+                    )
+                    time.sleep(backoff_seconds)
         except NotFoundError:
             # Surfaces as: DeploymentNotFound - The API deployment for this
             # resource does not exist.

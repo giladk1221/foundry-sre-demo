@@ -2,8 +2,9 @@
 import logging
 
 from fastapi import FastAPI, HTTPException
-from openai import NotFoundError
+from openai import NotFoundError, RateLimitError
 from pydantic import BaseModel
+from starlette.responses import JSONResponse
 
 from app.chat_service import chat_service
 from app.config import settings
@@ -42,3 +43,11 @@ def chat(req: ChatRequest) -> ChatResponse:
                 "does not exist in the Foundry resource."
             ),
         ) from exc
+    except RateLimitError:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "Service is temporarily rate limited. Please retry after 60 seconds."
+            },
+            headers={"Retry-After": "60"},
+        )
