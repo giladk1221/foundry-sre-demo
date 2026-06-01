@@ -1,0 +1,74 @@
+name: CD
+
+# Continuous deployment: any merge to main builds the image and rolls it out to
+# Azure Container Apps, then smoke-tests the new revision. A merged SRE/Copilot
+# fix PR triggers this automatically; the SRE `validator` agent confirms the run.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - '.github/workflows/cd.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # OIDC federated login to Azure
+  contents: read
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      CONTAINERAPP_NAME: ${{ vars.ACA_NAME }}
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build image in ACR
+        run: |
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "foundry-sre-demo:${IMAGE_TAG}" \
+            --image "foundry-sre-demo:latest" \
+            --file Dockerfile .
+
+      - name: Deploy new revision to Container Apps
+        run: |
+          az containerapp update \
+            --name "$CONTAINERAPP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "${ACR_NAME}.azurecr.io/foundry-sre-demo:${IMAGE_TAG}"
+
+      - name: Smoke test /health (post-deploy validation)
+        run: |
+          FQDN=$(az containerapp show \
+            --name "$CONTAINERAPP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          echo "Probing https://${FQDN}/health"
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /tmp/health.json -w '%{http_code}' "https://${FQDN}/health" || true)
+            if [ "$code" = "200" ]; then
+              echo "Healthy:"; cat /tmp/health.json; exit 0
+            fi
+            echo "attempt $i: HTTP $code — waiting for new revision..."
+            sleep 10
+          done
+          echo "Health check failed after deploy"; cat /tmp/health.json || true; exit 1
