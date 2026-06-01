@@ -23,7 +23,7 @@ class Settings:
     # This default points at "gpt-4o-prod", which was never created, so every
     # request fails with: DeploymentNotFound - The API deployment for this
     # resource does not exist.
-    deployment: str = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o-prod")
+    deployment: str = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
 
 
 settings = Settings()

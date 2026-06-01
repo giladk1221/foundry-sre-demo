@@ -3,7 +3,9 @@ import logging
 
 from fastapi import FastAPI, HTTPException
 from openai import NotFoundError
+from openai import RateLimitError
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 
 from app.chat_service import chat_service
 from app.config import settings
@@ -42,3 +44,9 @@ def chat(req: ChatRequest) -> ChatResponse:
                 "does not exist in the Foundry resource."
             ),
         ) from exc
+    except RateLimitError:
+        return JSONResponse(
+            status_code=429,
+            headers={"Retry-After": "60"},
+            content={"error": "Rate limited. Please retry after 60 seconds."},
+        )
