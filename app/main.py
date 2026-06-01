@@ -3,6 +3,7 @@ import logging
 
 from fastapi import FastAPI, HTTPException
 from openai import NotFoundError
+from openai import RateLimitError
 from pydantic import BaseModel
 
 from app.chat_service import chat_service
@@ -33,6 +34,13 @@ def chat(req: ChatRequest) -> ChatResponse:
     try:
         reply = chat_service.complete(req.prompt)
         return ChatResponse(reply=reply, deployment=settings.deployment)
+    except RateLimitError as exc:
+        # 429: Azure OpenAI rate limit exceeded; advise the client to back off
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please retry after 60 seconds.",
+            headers={"Retry-After": "60"},
+        ) from exc
     except NotFoundError as exc:
         # 502: upstream Foundry deployment misconfiguration
         raise HTTPException(
