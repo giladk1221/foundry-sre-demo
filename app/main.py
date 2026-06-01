@@ -3,6 +3,7 @@ import logging
 
 from fastapi import FastAPI, HTTPException
 from openai import NotFoundError
+from openai import RateLimitError
 from pydantic import BaseModel
 
 from app.chat_service import chat_service
@@ -41,4 +42,10 @@ def chat(req: ChatRequest) -> ChatResponse:
                 f"DeploymentNotFound: deployment '{settings.deployment}' "
                 "does not exist in the Foundry resource."
             ),
+        ) from exc
+    except RateLimitError as exc:
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limited by upstream model. Please retry after 60 seconds.",
+            headers={"Retry-After": "60"},
         ) from exc
