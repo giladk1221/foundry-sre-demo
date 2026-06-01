@@ -1,5 +1,9 @@
 name: CD
 
+# Explicit run title so the Actions run reads as a deployment regardless of the
+# triggering commit's message (the run name otherwise defaults to the commit subject).
+run-name: "CD · deploy ${{ github.sha }}"
+
 # Continuous deployment: any merge to main builds the image and rolls it out to
 # Azure Container Apps, then smoke-tests the new revision. A merged SRE/Copilot
 # fix PR triggers this automatically; the SRE `validator` agent confirms the run.
