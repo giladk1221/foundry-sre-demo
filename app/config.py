@@ -18,7 +18,7 @@ class Settings:
     api_key: str = os.getenv("AZURE_OPENAI_API_KEY", "")
     api_version: str = os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21")
 
-    deployment: str = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o-prod")
+    deployment: str = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
 
 
 settings = Settings()
