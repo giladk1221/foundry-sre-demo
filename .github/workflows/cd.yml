@@ -1,8 +1,12 @@
 name: CD
 
-# Explicit run title so the Actions run reads as a deployment regardless of the
-# triggering commit's message (the run name otherwise defaults to the commit subject).
-run-name: "CD · deploy ${{ github.sha }}"
+# Explicit run title so each run reads as a deployment and shows WHAT is being
+# shipped (the fix commit subject), instead of defaulting to a bare commit message.
+# On manual dispatch there is no head commit, so fall back to the actor.
+run-name: >-
+  CD · ${{ github.event_name == 'workflow_dispatch'
+    && format('manual deploy by @{0}', github.actor)
+    || github.event.head_commit.message }}
 
 # Continuous deployment: any merge to main builds the image and rolls it out to
 # Azure Container Apps, then smoke-tests the new revision. A merged SRE/Copilot
@@ -24,7 +28,9 @@ permissions:
 
 concurrency:
   group: cd-${{ github.ref }}
-  cancel-in-progress: false
+  # Supersede an older in-flight deploy (e.g. one hung on a crash-looping
+  # revision) so the newest fix rolls out instead of queuing behind it.
+  cancel-in-progress: true
 
 jobs:
   deploy:
