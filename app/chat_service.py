@@ -24,7 +24,7 @@ class ChatService:
             for attempt in range(3):
                 try:
                     response = self._client.chat.completions.create(
-                        model=settings.deployment,  # <-- stale deployment name
+                        model=settings.deployment,
                         messages=[{"role": "user", "content": prompt}],
                     )
                     return response.choices[0].message.content or ""
