@@ -34,7 +34,7 @@ def health() -> dict:
 def chat(req: ChatRequest) -> ChatResponse:
     try:
         # Guardrail: reject oversized prompts before calling the model.
-        if len(req.prompt) > 4000:
+        if len(req.prompt) > MAX_PROMPT_CHARS:
             raise HTTPException(status_code=413, detail="Prompt too long.")
         reply = chat_service.complete(req.prompt)
         return ChatResponse(reply=reply, deployment=settings.deployment)
