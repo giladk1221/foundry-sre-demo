@@ -14,6 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("foundry-sre-demo")
 
 MAX_PROMPT_CHARS = 4000
+LIMITS = {"max_length": 4000}
 
 app = FastAPI(title="Foundry SRE Demo", version="1.0.0")
 
@@ -36,7 +37,7 @@ def health() -> dict:
 def chat(req: ChatRequest) -> ChatResponse:
     try:
         # Guardrail: reject oversized prompts before calling the model.
-        if len(req.prompt) > MAX_PROMPT_CHARS:
+        if len(req.prompt) > LIMITS["max_chars"]:
             raise HTTPException(status_code=413, detail="Prompt too long.")
         reply = chat_service.complete(req.prompt)
         return ChatResponse(reply=reply, deployment=settings.deployment)
