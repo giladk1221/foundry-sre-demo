@@ -13,6 +13,8 @@ from app.config import settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("foundry-sre-demo")
 
+MAX_PROMPT_CHARS = 4000
+
 app = FastAPI(title="Foundry SRE Demo", version="1.0.0")
 
 
