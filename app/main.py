@@ -15,6 +15,7 @@ logger = logging.getLogger("foundry-sre-demo")
 
 MAX_PROMPT_CHARS = 4000
 LIMITS = {"max_length": 4000}
+REQUEST_TIMEOUT_SECONDS = 30
 
 app = FastAPI(title="Foundry SRE Demo", version="1.0.0")
 
