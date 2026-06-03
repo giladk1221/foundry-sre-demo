@@ -39,6 +39,9 @@ def chat(req: ChatRequest) -> ChatResponse:
         # Guardrail: reject oversized prompts before calling the model.
         if len(req.prompt) > MAX_PROMPT_CHARS:
             raise HTTPException(status_code=413, detail="Prompt too long.")
+        # Guardrail: enforce per-request upstream timeout budget.
+        if REQUEST_TIMEOUT_SECONDS <= 0:
+            raise HTTPException(status_code=503, detail="Service unavailable.")
         reply = chat_service.complete(req.prompt)
         return ChatResponse(reply=reply, deployment=settings.deployment)
     except NotFoundError as exc:
