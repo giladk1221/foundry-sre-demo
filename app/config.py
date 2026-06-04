@@ -13,7 +13,7 @@ load_dotenv()
 
 class Settings:
     endpoint: str = os.getenv(
-        "AZURE_OPENAI_ENDPOINT", "https://sre-demo-foundry.openai.azure.com"
+        "AZURE_OPENAI_ENDPOINT", "https://sre-demo-openai.openai.azure.com"
     )
     api_key: str = os.getenv("AZURE_OPENAI_API_KEY", "")
     api_version: str = os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21")
