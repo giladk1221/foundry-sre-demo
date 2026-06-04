@@ -2,6 +2,7 @@
 import logging
 
 from fastapi import FastAPI, HTTPException
+from openai import APIConnectionError
 from openai import NotFoundError
 from openai import RateLimitError
 from pydantic import BaseModel
@@ -59,4 +60,9 @@ def chat(req: ChatRequest) -> ChatResponse:
             status_code=429,
             headers={"Retry-After": "60"},
             content={"error": "Rate limited. Please retry after 60 seconds."},
+        )
+    except APIConnectionError:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to reach the Azure OpenAI endpoint. Please try again later.",
         )
